@@ -1,0 +1,150 @@
+Command: /home/shivam/.espressif/python_env/idf6.1_py3.12_env/bin/python /home/shivam/esp/esp-idf/tools/idf_monitor.py -p /dev/ttyACM0 -b 115200 --toolchain-prefix xtensa-esp32s3-elf- --target esp32s3 --revision 0 /home/shivam/esp/sih_voice/build/sih_voice.elf /home/shivam/esp/sih_voice/build/bootloader/bootloader.elf -m '/home/shivam/.espressif/python_env/idf6.1_py3.12_env/bin/python' '/home/shivam/esp/esp-idf/tools/idf.py'
+[0;32mI (97) esp_image: segment 0: paddr=00010020 vaddr=3c090020 size= Chip ESP-ROM:esp32s3-20210327[0m
+Build:Mar 27 2021
+rst:0x15 (USB_UART_CHIP_RESET),boot:0x8 (SPI_FAST_FLASH_BOOT)
+Saved PC:0x40048839
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fce2820,len:0x14f0
+load:0x403c8700,len:0xda0
+load:0x403cb700,len:0x2f58
+entry 0x403c8908
+[0;32mI (24) boot: ESP-IDF v6.1-dev-2938-g12f36a021f 2nd stage bootloader[0m
+[0;32mI (25) boot: compile time Aug 28 2026 18:37:09[0m
+[0;32mI (25) boot: Multicore bootloader[0m
+[0;32mI (26) boot: chip revision: v0.2[0m
+[0;32mI (29) boot: efuse block revision: v1.3[0m
+[0;32mI (33) boot.esp32s3: Boot SPI Speed : 80MHz[0m
+[0;32mI (37) boot.esp32s3: SPI Mode       : DIO[0m
+[0;32mI (40) boot.esp32s3: SPI Flash Size : 8MB[0m
+[0;32mI (44) boot: Enabling RNG early entropy source...[0m
+[0;32mI (49) boot: Partition Table:[0m
+[0;32mI (51) boot: ## Label            Usage          Type ST Offset   Length[0m
+[0;32mI (58) boot:  0 nvs              WiFi data        01 02 00009000 00004000[0m
+[0;32mI (64) boot:  1 otadata          OTA data         01 00 0000d000 00002000[0m
+[0;32mI (71) boot:  2 phy_init         RF data          01 01 0000f000 00001000[0m
+[0;32mI (77) boot:  3 factory          factory app      00 00 00010000 00100000[0m
+[0;32mI (84) boot:  4 spiffs           Unknown data     01 82 00110000 00200000[0m
+[0;32mI (90) boot: End of partition table[0m
+[0;32mI (93) boot: Defaulting to factory image[0m
+[0;32mI (97) esp_image: segment 0: paddr=00010020 vaddr=3c090020 size=1be04h (114180) map[0m
+[0;32mI (125) esp_image: segment 1: paddr=0002be2c vaddr=3fc97a00 size=041ech ( 16876) load[0m
+[0;32mI (129) esp_image: segment 2: paddr=00030020 vaddr=42000020 size=88724h (558884) map[0m
+[0;32mI (230) esp_image: segment 3: paddr=000b874c vaddr=3fc9bbec size=00e84h (  3716) load[0m
+[0;32mI (231) esp_image: segment 4: paddr=000b95d8 vaddr=40374000 size=139ech ( 80364) load[0m
+[0;32mI (251) esp_image: segment 5: paddr=000ccfcc vaddr=50000000 size=00024h (    36) load[0m
+[0;32mI (260) boot: Loaded app from partition at offset 0x10000[0m
+[0;32mI (260) boot: Disabling RNG early entropy source...[0m
+[0;32mI (270) cpu_start: Multicore app[0m
+[0;32mI (279) cpu_start: GPIO 44 and 43 are used as console UART I/O pins[0m
+[0;32mI (280) cpu_start: Pro cpu start user code[0m
+[0;32mI (280) cpu_start: cpu freq: 160000000 Hz[0m
+[0;32mI (281) app_init: Application information:[0m
+[0;32mI (285) app_init: Project name:     sih_voice[0m
+[0;32mI (289) app_init: App version:      1[0m
+[0;32mI (292) app_init: Compile time:     Aug 28 2026 18:37:20[0m
+[0;32mI (297) app_init: ELF file SHA256:  4b3ebf6b7...[0m
+[0;32mI (302) app_init: ESP-IDF:          v6.1-dev-2938-g12f36a021f[0m
+[0;32mI (307) efuse_init: Min chip rev:     v0.0[0m
+[0;32mI (311) efuse_init: Max chip rev:     v0.99 [0m
+[0;32mI (315) efuse_init: Chip rev:         v0.2[0m
+[0;32mI (319) heap_init: Initializing. RAM available for dynamic allocation:[0m
+[0;32mI (325) heap_init: At 3FCA0900 len 00048E10 (291 KiB): RAM[0m
+[0;32mI (330) heap_init: At 3FCE9710 len 00005724 (21 KiB): RAM[0m
+[0;32mI (335) heap_init: At 3FCF0000 len 00008000 (32 KiB): DRAM[0m
+[0;32mI (341) heap_init: At 600FE000 len 00001FE8 (7 KiB): RTCRAM[0m
+[0;32mI (347) spi_flash: detected chip: gd[0m
+[0;32mI (349) spi_flash: flash io: dio[0m
+[0;32mI (353) sleep_gpio: Configure to isolate all GPIO pins in sleep state[0m
+[0;32mI (359) sleep_gpio: Enable automatic switching of GPIO sleep configuration[0m
+[0;32mI (366) main_task: Started on CPU0[0m
+[0;32mI (376) main_task: Calling app_main()[0m
+[0;32mI (396) TCP_MIC: Initializing I2S...[0m
+[0;32mI (396) pp: pp rom version: e7ae62f[0m
+[0;32mI (406) net80211: net80211 rom version: e7ae62f[0m
+[0;32mI (416) wifi:wifi driver task: 3fcad42c, prio:23, stack:6656, core=0[0m
+[0;32mI (426) wifi:wifi firmware version: 44738b4[0m
+[0;32mI (426) wifi:wifi certification version: v7.0[0m
+[0;32mI (426) wifi:config NVS flash: enabled[0m
+[0;32mI (426) wifi:config nano formatting: disabled[0m
+[0;32mI (426) wifi:Init data frame dynamic rx buffer num: 32[0m
+[0;32mI (436) wifi:Init static rx mgmt buffer num: 5[0m
+[0;32mI (436) wifi:Init management short buffer num: 32[0m
+[0;32mI (436) wifi:Init dynamic tx buffer num: 32[0m
+[0;32mI (446) wifi:Init static tx FG buffer num: 2[0m
+[0;32mI (446) wifi:Init static rx buffer size: 1600[0m
+[0;32mI (456) wifi:Init static rx buffer num: 10[0m
+[0;32mI (456) wifi:Init dynamic rx buffer num: 32[0m
+[0;32mI (456) wifi_init: rx ba win: 6[0m
+[0;32mI (466) wifi_init: accept mbox: 6[0m
+[0;32mI (466) wifi_init: tcpip mbox: 32[0m
+[0;32mI (466) wifi_init: udp mbox: 6[0m
+[0;32mI (476) wifi_init: tcp mbox: 6[0m
+[0;32mI (476) wifi_init: tcp tx win: 5760[0m
+[0;32mI (476) wifi_init: tcp rx win: 5760[0m
+[0;32mI (476) wifi_init: tcp mss: 1440[0m
+[0;32mI (486) wifi_init: WiFi IRAM OP enabled[0m
+[0;32mI (486) wifi_init: WiFi RX IRAM OP enabled[0m
+[0;33mW (496) wifi:Password length matches WPA2 standards, authmode threshold changes from OPEN to WPA2[0m
+[0;32mI (496) phy_init: phy_version 711,97bcf0a2,Aug 25 2025,19:04:10[0m
+[0;32mI (546) phy_init: Saving new calibration data due to checksum failure or outdated calibration data, mode(0)[0m
+[0;32mI (606) wifi:mode : sta (10:00:3b:46:0b:10)[0m
+[0;32mI (606) wifi:enable tsf[0m
+[0;32mI (606) main_task: Returned from app_main()[0m
+[0;32mI (616) wifi:new:<11,0>, old:<1,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (616) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (5126) wifi:state: auth -> init (0x200)[0m
+[0;32mI (5136) wifi:new:<11,0>, old:<11,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (7556) wifi:new:<11,0>, old:<11,0>, ap:<255,255>, sta:<11,0>, prof:1, snd_ch_cfg:0x0[0m
+[0;32mI (7556) wifi:state: init -> auth (0xb0)[0m
+[0;32mI (8506) wifi:state: auth -> assoc (0x0)[0m
+[0;32mI (8516) wifi:state: assoc -> run (0x10)[0m
+[0;32mI (8536) wifi:connected with abc, aid = 1, channel 11, BW20, bssid = ee:28:f0:20:92:ee[0m
+[0;32mI (8536) wifi:security: WPA3-SAE, phy: bgn, rssi: -35[0m
+[0;32mI (8546) wifi:pm start, type: 1[0m
+
+[0;32mI (8546) wifi:dp: 1, bi: 102400, li: 3, scale listen interval from 307200 us to 307200 us[0m
+[0;32mI (8556) wifi:set rx beacon pti, rx_bcn_pti: 0, bcn_timeout: 25000, mt_pti: 0, mt_time: 10000[0m
+[0;32mI (8556) wifi:dp: 2, bi: 102400, li: 4, scale listen interval from 307200 us to 409600 us[0m
+[0;32mI (8566) wifi:AP's beacon interval = 102400 us, DTIM period = 2[0m
+[0;32mI (9596) esp_netif_handlers: sta ip: 10.157.47.172, mask: 255.255.255.0, gw: 10.157.47.229[0m
+[0;32mI (9596) TCP_MIC: Wi-Fi connected! Starting TCP stream task...[0m
+[0;32mI (9596) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (10406) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (10406) wifi:<ba-add>idx:0 (ifx:0, ee:28:f0:20:92:ee), tid:0, ssn:4, winSize:64[0m
+[0;32mI (12406) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (12446) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (14446) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (14686) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (16686) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (16706) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (18706) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (18986) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (20986) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (21256) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (23256) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (23306) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (25306) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (25356) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (27356) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (27356) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (29366) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (29636) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (31636) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (31896) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (33896) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (33896) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (35896) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (35916) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (37916) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (37946) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (39946) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (40086) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (42086) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (42386) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (44386) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (44586) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (46586) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[1;31mE (46846) TCP_MIC: Socket unable to connect: errno 104[0m
+[0;32mI (48846) TCP_MIC: Connecting to 10.157.47.65:5000[0m
+[0;32mI (48846) TCP_MIC: Successfully connected! Streaming audio...[0m

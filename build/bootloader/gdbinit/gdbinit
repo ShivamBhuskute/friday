@@ -1,0 +1,2 @@
+source /home/shivam/esp/sih_voice/build/bootloader/gdbinit/symbols
+source /home/shivam/esp/sih_voice/build/bootloader/gdbinit/connect
