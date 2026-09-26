@@ -9,6 +9,9 @@ __pycache__/
 # Node
 node_modules/
 web/dist/
+# Incremental build state from `tsc -b`. It embeds absolute paths and mtimes,
+# so it differs on every machine and every build.
+*.tsbuildinfo
 
 # Runtime data: the SQLite database, recorded WAVs, device sysmon snapshots
 data/
