@@ -1,0 +1,122 @@
+# FRIDAY configuration
+# All paths are relative to the project root unless absolute.
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  # Serve the built frontend from web/dist when present
+  serve_web: true
+
+ingest:
+  port: 5000
+  # Bind address for the TCP ingest listener
+  host: "0.0.0.0"
+  # Fallback interpretation when the device sends headerless raw PCM.
+  # The real WAV header always wins when a RIFF/WAVE stream is detected.
+  sample_rate: 16000
+  channels: 1
+  bits: 16
+  # Energy-VAD endpointing for headerless streams (silence seconds).
+  # The device already endpoints the utterance itself (STREAM_SILENCE_MS 800)
+  # and signals the end by closing the socket, so these two values are only a
+  # safety net for a device that dies mid-sentence. They must stay slightly
+  # LOOSER than the device's own gate (STREAM_SILENCE_RMS_GATE 0.007), or the
+  # server cuts first -- which splits "what is the weather ... in Pune" at the
+  # pause into two separate turns. The server logs a warning at startup if
+  # these drift out of alignment with the firmware.
+  vad_silence_s: 0.8
+  vad_rms_threshold: 0.006
+  # Hard cap on a single utterance (seconds). Must be >= the device's
+  # STREAM_MAX_TIME_MS (10 s) for the same reason.
+  max_utterance_s: 10.0
+  # Reject utterances shorter than this (seconds) as noise
+  min_utterance_s: 0.3
+  # Max concurrent device connections
+  max_connections: 4
+
+stt:
+  # faster-whisper / CTranslate2 model id or local path
+  model: "small.en"
+  # auto | cuda | cpu
+  device: "auto"
+  # int8_float16 (cuda) | int8 (cpu) | float16
+  compute_type: "auto"
+  beam_size: 5
+  # Strip leading/trailing silence and filler before transcription
+  vad_filter: true
+  # Normalise common number/word forms: "seven times twenty three" -> "7 times 23"
+  normalize_numbers: true
+  # Below this, treat as "no speech". Calibrated against the firmware's own
+  # captures in friday_kws/deteced_recordings/: real commands score 0.62-0.83,
+  # false wake-word activations on music and room tone score 0.28-0.45. Note this
+  # gate cannot catch Whisper's repetition loops, which come out *confident* --
+  # server/stt.py is_repetitive() handles those.
+  min_confidence: 0.5
+  # Vocabulary biasing. small.en mishears proper nouns ("Pune" -> "Pooner");
+  # biasing the decoder with the words this assistant actually uses fixes it
+  # without paying for a larger model.
+  hotwords:
+    - Pune
+    - Mumbai
+    - Delhi
+    - Bengaluru
+    - Bangalore
+    - Hyderabad
+    - Chennai
+    - Kolkata
+    - Nashik
+    - Nagpur
+    - Indore
+    - Jaipur
+    - Lucknow
+    - Ahmedabad
+    - Surat
+    - Kochi
+    - Mysuru
+    - Coimbatore
+    - Vizag
+    - weather
+    - temperature
+    - celsius
+    - fahrenheit
+  # Optional decoder priming. Leave null to rely on hotwords alone.
+  initial_prompt: null
+
+llm:
+  # Local GGUF path (relative to project root). Prefetched by scripts/setup.sh
+  model_path: "models/qwen2.5-3b-instruct-q4_k_m.gguf"
+  n_ctx: 4096
+  # -1 = auto (all layers). Set 0 to force CPU if the GPU build misbehaves.
+  n_gpu_layers: -1
+  max_tokens: 400
+  temperature: 0.2
+  # Maximum tool-calling rounds before we force a final answer
+  max_tool_rounds: 4
+  # Load the model at startup instead of lazily on first request
+  eager_load: true
+  # Qwen2.5 needs the function-calling chat handler. With plain "chatml" the
+  # model ignores the tools and does arithmetic itself, which is wrong.
+  chat_format: "chatml-function-calling"
+
+models:
+  dir: "models"
+
+data:
+  dir: "data"
+
+tools:
+  # Seconds to cache weather responses
+  weather_cache_ttl: 600
+  weather_timeout_s: 8.0
+  # Answer plain arithmetic without invoking the LLM (deterministic fast path)
+  calc_fast_path: true
+
+retention:
+  # Max turns kept in the database (0 = unlimited).
+  # 200 keeps a few hours of conversation in a few hundred MB.
+  max_turns: 200
+  # Delete the .wav when a turn is pruned. Turning this off keeps every
+  # recording forever, so only do it deliberately -- e.g. while debugging STT.
+  # To change it for this machine only, put `retention: {delete_audio: false}`
+  # in config.local.yaml, which is git-ignored and wins over this file.
+  delete_audio: true

@@ -1,0 +1,68 @@
+[project]
+name = "friday"
+version = "0.1.0"
+description = "FRIDAY - local voice assistant pipeline: ESP32 KWS -> TCP PCM -> STT -> LLM -> web console"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.54.0",
+    "pydantic>=2.9",
+    "pydantic-settings>=2.5",
+    "httpx>=0.28.1",
+    "pyyaml>=6.0.3",
+    "websockets>=14.0",
+    "faster-whisper>=1.2.1",
+    # Built from sdist with -DGGML_CUDA=on; there is no CUDA wheel on PyPI.
+    # scripts/setup.sh does the build so the flag is never forgotten.
+    "llama-cpp-python>=0.3.35",
+    "numpy>=2.5.3",
+    "soundfile>=0.13.1",
+    # CTranslate2 dlopens libcublas.so.12 and libcudnn.so.9. A stock CUDA 13
+    # toolkit only ships the .so.13 / .so.10 line, so the cu12 wheels are
+    # preloaded explicitly by server/cuda_compat.py.
+    "nvidia-cublas-cu12>=12.9",
+    "nvidia-cudnn-cu12>=9.26",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.0",
+    "pytest-timeout>=2.4",
+    "ruff>=0.9",
+    # Only tools/make_fixtures.py uses TTS, and only to regenerate the audio
+    # golden set. Kept out of the runtime so a fresh install stays small.
+    "piper-tts>=1.8",
+    "huggingface_hub>=1.0",
+]
+
+[project.scripts]
+friday = "server.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["server"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+    "slow: requires downloaded model weights (STT / LLM), and the GPU",
+]
+# A wedged test should fail, not hang the run. 30s is generous for a unit test
+# (the whole unit suite runs in ~15s); the tests marked `slow` load model
+# weights and carry their own explicit timeouts.
+timeout = 30
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

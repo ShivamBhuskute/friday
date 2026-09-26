@@ -1,0 +1,85 @@
+{
+  "q_math_7x23.wav": {
+    "spoken": "what is 7 times 23",
+    "expect_contains": [
+      "7",
+      "23"
+    ],
+    "duration_s": 2.36,
+    "sample_rate": 16000
+  },
+  "q_math_12_div_4.wav": {
+    "spoken": "what is 12 divided by 4",
+    "expect_contains": [
+      "12",
+      "4"
+    ],
+    "duration_s": 2.38,
+    "sample_rate": 16000
+  },
+  "q_math_2_plus_2.wav": {
+    "spoken": "what is two plus two",
+    "expect_contains": [
+      "2",
+      "2"
+    ],
+    "duration_s": 1.67,
+    "sample_rate": 16000
+  },
+  "q_weather_pune.wav": {
+    "spoken": "what is the weather in Pune right now",
+    "expect_contains": [
+      "weather",
+      "pune",
+      "right",
+      "now"
+    ],
+    "duration_s": 2.58,
+    "sample_rate": 16000
+  },
+  "q_weather_delhi.wav": {
+    "spoken": "what is the weather in Delhi",
+    "expect_contains": [
+      "weather",
+      "delhi"
+    ],
+    "duration_s": 1.9,
+    "sample_rate": 16000
+  },
+  "q_time_now.wav": {
+    "spoken": "what time is it right now",
+    "expect_contains": [
+      "time",
+      "right",
+      "now"
+    ],
+    "duration_s": 1.84,
+    "sample_rate": 16000
+  },
+  "q_status.wav": {
+    "spoken": "what is the system status",
+    "expect_contains": [
+      "system",
+      "status"
+    ],
+    "duration_s": 1.89,
+    "sample_rate": 16000
+  },
+  "q_greeting.wav": {
+    "spoken": "hello there",
+    "expect_contains": [
+      "hello"
+    ],
+    "duration_s": 1.0,
+    "sample_rate": 16000
+  },
+  "jfk_excerpt.wav": {
+    "spoken": "And so my fellow Americans",
+    "expect_contains": [
+      "fellow",
+      "americans"
+    ],
+    "duration_s": 2.15,
+    "sample_rate": 16000
+  }
+}

@@ -1,2 +1,20 @@
-build/
-managed_components/
+# This repository holds two projects: friday_kws/ (the ESP32-S3 firmware) and
+# website/ (the PC pipeline and web console). Each has its own .gitignore for
+# its own build output; this file covers the scratch that sits beside them in
+# the working tree and is not part of the project.
+
+# Sibling projects with their own histories -- not part of FRIDAY.
+# `model/` and `vajra-edge-dataset/` are separate git repositories, so git would
+# otherwise record them as embedded repositories and refuse to add them.
+/model/
+/vajra-edge-dataset/
+
+# Datasets and archives staged next to the project, not source.
+/dataset_bs/
+*.zip
+
+# Editor and OS scratch
+.DS_Store
+*~
+.idea/
+.vscode/

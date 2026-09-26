@@ -1,0 +1,36 @@
+# ESP-IDF build output. The pattern has no leading slash, so it matches at any
+# depth -- which is why `main/build/` is covered too. (An earlier `build/` entry
+# in the repo root did not cover `main/build/`, and those artifacts got
+# committed before the rule existed.)
+build/
+sdkconfig.old
+
+# Fetched by `idf.py component manage`; the pinned versions live in
+# dependencies.lock, which IS tracked, so these are reproducible.
+managed_components/
+
+# Editor and IDE scratch
+.cache/
+*~
+*.bak
+
+# Runtime debug output
+capture.log
+dumps/
+
+# KWS training data: ~191 MB of background noise and wake-word clips, used to
+# train friday_model.tflite. Not needed to build or run the firmware, and far
+# too large for the repository. `dataset/raw_audio/` is small and is kept.
+dataset/background/
+dataset/friday/
+
+# Derived KWS validation set (~5 MB, 174 clips) regenerated from
+# deteced_recordings/ during threshold tuning.
+falsepositive_samples/
+
+# NOTE: these are intentionally tracked, because the PC side depends on them:
+#   main/                 the firmware
+#   models/               the quantised KWS model and its normaliser stats
+#   deteced_recordings/   real device captures; they are the calibration
+#                         evidence behind stt.min_confidence in ../website
+#   recording_server.py   the PC-side capture harness used to produce them

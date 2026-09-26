@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Node
+node_modules/
+web/dist/
+
+# Runtime data: the SQLite database, recorded WAVs, device sysmon snapshots
+data/
+
+# Model weights and the HF cache. Fetched by scripts/fetch_models.py (~2.5 GB).
+models/
+
+# Local overrides
+config.local.yaml
+.env

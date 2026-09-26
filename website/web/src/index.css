@@ -1,0 +1,124 @@
+@import 'tailwindcss';
+
+/*
+ * One accent, one warn, one danger. Everything else is a neutral on a near-black
+ * ground, so the only things that draw the eye are the state of the pipeline
+ * and the words being spoken.
+ */
+@theme {
+  --color-ink-950: #07080b;
+  --color-ink-900: #0b0d12;
+  --color-ink-850: #10131a;
+  --color-ink-800: #151922;
+  --color-ink-700: #1e2330;
+  --color-ink-600: #2a3140;
+  --color-ink-500: #3b4354;
+  --color-ink-400: #5b657a;
+  --color-ink-300: #8b95ab;
+  --color-ink-200: #b8c0d0;
+  --color-ink-100: #e4e8f0;
+
+  --color-accent-400: #5eead4;
+  --color-accent-500: #2dd4bf;
+  --color-accent-600: #14b8a6;
+
+  --color-glow-400: #a78bfa;
+  --color-glow-500: #8b5cf6;
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+}
+
+@layer base {
+  html {
+    background: var(--color-ink-950);
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(90rem 50rem at 12% -10%, oklch(0.32 0.09 195 / 0.16), transparent 60%),
+      radial-gradient(70rem 40rem at 92% 4%, oklch(0.34 0.13 295 / 0.14), transparent 60%),
+      var(--color-ink-950);
+    color: var(--color-ink-100);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+
+  /* A visible, consistent focus ring: the whole UI is keyboard reachable. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent-500);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-ink-700);
+    border-radius: 999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-600);
+    background-clip: content-box;
+  }
+}
+
+@layer utilities {
+  /* The scanning line behind a processing turn. */
+  .sweep::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      transparent 30%,
+      oklch(0.85 0.14 195 / 0.06) 50%,
+      transparent 70%
+    );
+    background-size: 220% 100%;
+    animation: sweep 2.4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes sweep {
+    0% {
+      background-position: 140% 0;
+    }
+    100% {
+      background-position: -40% 0;
+    }
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.45;
+      transform: scale(0.82);
+    }
+  }
+
+  .pulse-dot {
+    animation: pulse-dot 1.4s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sweep::after,
+    .pulse-dot {
+      animation: none;
+    }
+  }
+}
