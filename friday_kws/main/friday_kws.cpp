@@ -26,10 +26,10 @@
 #define WIFI_PASS "dronebridge"
 
 // ---------------- Wi-Fi audio streaming (post wake-word) ----------------
-#define STREAM_SERVER_IP        "10.217.225.8"  // <-- CHANGE to your PC's IP
+#define STREAM_SERVER_IP        "10.217.225.3"  // <-- CHANGE to your PC's IP
 #define STREAM_SERVER_PORT      5000
 #define STREAM_SILENCE_MS       800     // stop streaming after this much continuous silence
-#define STREAM_SILENCE_RMS_GATE 0.007f  // hop counts as "silent" below this RMS (same units as RMS_GATE)
+#define STREAM_SILENCE_RMS_GATE 0.015f  // hop counts as "silent" below this RMS (same units as RMS_GATE)
 
 // TensorFlow Lite Micro
 #include "tensorflow/lite/micro/micro_mutable_op_resolver.h"
@@ -65,8 +65,8 @@
 #define HOP_SAMPLES    (HOP_FRAMES * STRIDE)   // 1920 samples = 120 ms
 #define HOP_MS         120
 #define WARMUP_HOPS    2
-#define THRESHOLD      0.50f
-#define HITS_REQUIRED  2
+#define THRESHOLD      0.52f
+#define HITS_REQUIRED  1
 #define COOLDOWN_HOPS  6
 #define INPUT_GAIN     1.0f
 #define VERBOSE        1
@@ -94,6 +94,10 @@ static int mag_lo, mag_hi;
 
 static i2s_chan_handle_t rx_handle;
 static volatile uint32_t i2s_overflow_count = 0;
+
+// ---------------- Flags ----------------
+static volatile bool wifi_connected = false;
+static volatile bool sysmon_started = false;
 
 // ---------------- Streaming queue ----------------
 typedef enum { STREAM_MSG_START, STREAM_MSG_AUDIO, STREAM_MSG_STOP } stream_msg_type_t;
@@ -230,9 +234,6 @@ bool init_dsp_and_tflite() {
     return true;
 }
 
-// Shift cached log-mel rows by HOP_FRAMES and compute only the newest HOP_FRAMES rows.
-// Frame f of the new window == frame f+HOP_FRAMES of the previous window (hop = 6 * 320 samples),
-// so the cached rows are exactly what a full recompute would give (DC estimate aside).
 static void update_frames(float mean_f, int64_t* t_fft, int64_t* t_mel) {
     const float scale = INPUT_GAIN / 32768.0f;
 
@@ -275,7 +276,6 @@ static void update_frames(float mean_f, int64_t* t_fft, int64_t* t_mel) {
     }
 }
 
-// Standardize + quantize. Returns false if train.py's std gate would have zeroed the tensor.
 static bool build_input() {
     const int total = NUM_FRAMES * NUM_MEL_BINS;
     const float* flat = &log_mel[0][0];
@@ -305,10 +305,6 @@ static bool build_input() {
     return true;
 }
 
-// Owns the TCP socket. Runs on Core 0 so blocking connect()/send() calls
-// never stall the audio capture / detection loop on Core 1. One connection
-// per wake-word-triggered utterance: opened on STREAM_MSG_START, closed on
-// STREAM_MSG_STOP (500 ms of silence).
 static void tcp_stream_task(void* pvParameters) {
     stream_msg_t msg;
     int sock = -1;
@@ -343,8 +339,8 @@ static void tcp_stream_task(void* pvParameters) {
 
             case STREAM_MSG_AUDIO: {
               if (sock < 0){
-                break; // no live connection -> drop this hop
-	      }
+                break; 
+              }
                 int sent = send(sock, msg.samples, sizeof(msg.samples), 0);
                 if (sent < 0) {
                     printf("Stream: send() failed, errno %d\n", errno);
@@ -374,12 +370,10 @@ void audio_inference_task(void *pvParameters) {
     int hops = 0, hit_count = 0, cooldown = 0;
 
     int led_timer_hops = 0;
-    // Add persistent filter state
     static float dc_x_prev = 0.0f;
     static float dc_y_prev = 0.0f;
-    const float R = 0.985f; // ~40 Hz cutoff at 16 kHz
+    const float R = 0.985f; 
 
-    // Post-wake-word streaming state
     bool is_streaming = false;
     int silence_ms = 0;
     int total_stream_ms = 0;
@@ -393,21 +387,17 @@ void audio_inference_task(void *pvParameters) {
         }
         int64_t t_start = esp_timer_get_time();
 
-        // Slide window, append new hop, collect hop-level stats
         memmove(audio_buf, audio_buf + HOP_SAMPLES, (AUDIO_LEN - HOP_SAMPLES) * sizeof(int16_t));
         int32_t hsum = 0; int64_t hsq = 0; int hpk = 0;
         
-	for (int i = 0; i < HOP_SAMPLES; i++) {
-            // Revert to >> 16 to prevent integer overflow and clipping
+        for (int i = 0; i < HOP_SAMPLES; i++) {
             int16_t raw_smp = (int16_t)(i2s_raw[i] >> 16); 
             
-            // Keep the DC blocker to filter out the hardware bias
             float x = (float)raw_smp;
             float y = x - dc_x_prev + R * dc_y_prev;
             dc_x_prev = x;
             dc_y_prev = y;
 
-            // Clamp and store
             int16_t smp = (int16_t)fmaxf(fminf(y, 32767.0f), -32768.0f);
             audio_buf[AUDIO_LEN - HOP_SAMPLES + i] = smp;
             
@@ -417,11 +407,10 @@ void audio_inference_task(void *pvParameters) {
             if (a > hpk) hpk = a;
         }
 
-	double hm = (double)hsum / HOP_SAMPLES;
+        double hm = (double)hsum / HOP_SAMPLES;
         double hv = (double)hsq / HOP_SAMPLES - hm * hm;
         float hop_rms = (float)sqrt(hv > 0.0 ? hv : 0.0) * scale;
 
-        // ---- Post-wake-word streaming: forward this hop's PCM over Wi-Fi ----
         if (is_streaming) {
             gpio_set_level(RED_LED, 0);
             gpio_set_level(GREEN_LED, 1);
@@ -438,7 +427,7 @@ void audio_inference_task(void *pvParameters) {
                 silence_ms = 0;
             }
 
-	    total_stream_ms += HOP_MS;
+            total_stream_ms += HOP_MS;
             
             if (silence_ms >= STREAM_SILENCE_MS || total_stream_ms >= STREAM_MAX_TIME_MS) {
                 stream_msg_t stop_msg;
@@ -449,18 +438,11 @@ void audio_inference_task(void *pvParameters) {
                 gpio_set_level(GREEN_LED, 0);
             }
             hops++;
-	    // if (led_timer_hops > 0) {
-	    //   led_timer_hops--;
-	    //   if (led_timer_hops == 0) {
-	    // 	gpio_set_level(GREEN_LED, 0);
-	    //   }
-	    // }
             continue;
         }
-	gpio_set_level(RED_LED, 1);
+        gpio_set_level(RED_LED, 1);
         hops++;
 
-        // Clip mean / rms over the valid part of the window (train.py: whole 1 s clip)
         int valid = hops * HOP_SAMPLES;
         if (valid > AUDIO_LEN) valid = AUDIO_LEN;
         const int16_t* tail = audio_buf + (AUDIO_LEN - valid);
@@ -484,7 +466,7 @@ void audio_inference_task(void *pvParameters) {
         int64_t t1 = esp_timer_get_time();
         bool valid_feat = (win_rms >= RMS_GATE) && build_input();
 
-        float p = 0.0f;   // gated input == training "silence" -> class 0
+        float p = 0.0f;   
         if (valid_feat) {
           if (interpreter->Invoke() == kTfLiteOk) {
                 int8_t raw = output->data.int8[0];
@@ -515,7 +497,6 @@ void audio_inference_task(void *pvParameters) {
             cooldown = COOLDOWN_HOPS;
             hit_count = 0;
 
-            // Start streaming the command that follows, if not already streaming
             if (!is_streaming) {
                 stream_msg_t start_msg;
                 start_msg.type = STREAM_MSG_START;
@@ -532,10 +513,11 @@ static void wifi_event_handler(void* arg, esp_event_base_t event_base, int32_t e
     if (event_id == WIFI_EVENT_STA_START) {
         esp_wifi_connect();
     } else if (event_id == WIFI_EVENT_STA_DISCONNECTED) {
+        wifi_connected = false;
         esp_wifi_connect();
     } else if (event_id == IP_EVENT_STA_GOT_IP) {
-        printf("\n=== Wi-Fi connected! Starting SysMon Dashboard ===\n");
-        sysmon_init();
+        printf("\n=== Wi-Fi connected! ===\n");
+        wifi_connected = true;
     }
 }
 
@@ -560,7 +542,6 @@ extern "C" void app_main() {
     esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &wifi_event_handler, NULL, NULL);
     esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &wifi_event_handler, NULL, NULL);
 
-    // Using strcpy for C++ struct compatibility
     wifi_config_t wifi_config = {};
     strcpy((char*)wifi_config.sta.ssid, WIFI_SSID);
     strcpy((char*)wifi_config.sta.password, WIFI_PASS);
@@ -579,15 +560,20 @@ extern "C" void app_main() {
         return;
     }
     
-    // Streaming: queue + task that forwards post-wake-word audio over TCP.
-    // Runs on Core 0 (with Wi-Fi) so its blocking socket calls never delay
-    // the audio capture / detection loop on Core 1.
     stream_queue = xQueueCreate(4, sizeof(stream_msg_t));
     xTaskCreatePinnedToCore(tcp_stream_task, "TCP_Stream", 8192, NULL, 4, NULL, 0);
 
     vTaskDelay(pdMS_TO_TICKS(2000));
-    // Audio task runs on Core 1 so it doesn't block Wi-Fi/SysMon on Core 0
-    xTaskCreatePinnedToCore(audio_inference_task, "Audio_Inference", 16384,
-                            NULL, 5, NULL, 1);
+    xTaskCreatePinnedToCore(audio_inference_task, "Audio_Inference", 16384, NULL, 5, NULL, 1);
     gpio_set_level(RED_LED, 1);
+
+    // 4. Main loop: wait for Wi-Fi flag to start sysmon, and keep the main task alive
+    while (1) {
+        if (wifi_connected && !sysmon_started) {
+            printf("\n=== Starting SysMon Dashboard ===\n");
+            sysmon_init();
+            sysmon_started = true;
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }
