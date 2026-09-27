@@ -148,6 +148,34 @@ pass  typed turn (no hardware)     'what is 7 times 23' -> '161.'
 .venv/bin/python tools/probe_agent.py
 ```
 
+### Things to say to FRIDAY
+
+These were run three times each through the HTTP API. All of them reach the
+right tool and give the right answer; the weather wording varies a little
+between runs because a 3B model is not deterministic in its phrasing.
+
+| Say this | Tool | Typical answer | Time |
+| --- | --- | --- | --- |
+| What is the weather in Pune right now? | `get_weather` | It is 29.3 degrees in Pune | 1-3 s |
+| What is the weather in Mumbai? | `get_weather` | It is 30.4 degrees in Mumbai | 1-2 s |
+| Is it raining in London? | `get_weather` | It is not raining in London | 1-2 s |
+| What is 7 times 23? | `calculate` | 161 | 0.2 s |
+| What is 15 percent of 240? | `calculate` | 36 | 0.2 s |
+| What is 2 to the power of 10? | `calculate` | 1024 | 0.2 s |
+| What is the current date? | `get_datetime` | The current date is 2026-09-27 | 0.8 s |
+| What time is it right now? | `get_datetime` | It is 11:53 in IST | 0.8 s |
+| Who are you? | none | I am Friday, how may I assist you today? | 0.6 s |
+| Tell me a joke. | none | Why don't scientists trust atoms? | 0.6 s |
+
+The first one is the best thing to demo: it is live data off the network, it
+exercises the audio path end to end, and the answer is visibly not something
+the model could have guessed.
+
+Avoid "How much memory does this machine have?". The model reaches for
+`calculate("memory()")` instead of `system_status` and then invents a number.
+That is a tool-selection limit of a 3B model, not a wiring fault, so it is
+left as a known limitation rather than papered over.
+
 ### Regenerating the speech fixtures
 
 ```bash
