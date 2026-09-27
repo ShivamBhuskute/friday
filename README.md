@@ -4,6 +4,8 @@ A wake-word voice assistant. You say **"FRIDAY"**, the ESP32-S3 streams your
 sentence over Wi-Fi, and a local pipeline transcribes it, answers it with a
 small language model plus tools, and shows the whole exchange in a web console.
 
+# Video Link: https://youtu.be/DWBUDTLkvM8
+
 Nothing leaves the machine. No cloud STT, no cloud LLM, no API keys.
 
 ```
