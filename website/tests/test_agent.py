@@ -8,9 +8,11 @@ model actually picks the right tool and does not hallucinate the answer.
 
 from __future__ import annotations
 
+import ast
 import json
 from typing import Any
 
+import jinja2
 import pytest
 
 from server.agent import (
@@ -19,6 +21,7 @@ from server.agent import (
     _clean_text,
     _extract_tool_calls,
     _is_call_stub,
+    _render_result,
     _safe_json,
     _signature,
     _strip_call_syntax,
@@ -29,6 +32,29 @@ from server.tools.registry import ToolRegistry
 from server.tools.weather import WeatherClient
 
 from .conftest import needs_llm
+
+
+def render_chatml_function_calling(messages: list[dict[str, Any]]) -> str:
+    """Render messages the way llama-cpp-python's chatml-function-calling does.
+
+    Pulled from the installed package rather than restated, so this test
+    tracks the real template. If a role the template cannot render is ever
+    sent again, the value in it goes missing here exactly as it does in
+    production.
+    """
+    import inspect
+
+    from llama_cpp import llama_chat_format
+
+    source = inspect.getsource(llama_chat_format.chatml_function_calling)
+    start = source.index("function_calling_template = (")
+    end = source.index("template_renderer = ", start)
+    template = ast.literal_eval(
+        source[start + len("function_calling_template = ") : end].strip()
+    )
+    env = jinja2.Environment(undefined=jinja2.StrictUndefined).from_string(template)
+    return env.render(messages=messages, tools=[], tool_calls=True, add_generation_prompt=True)
+
 
 # ------------------------------------------------------------------ fakes
 
@@ -298,9 +324,33 @@ class TestLoop:
         for agent, llama, _ in make_agent(cfg, script):
             agent.answer("what is 7 times 23?")
             second = llama.requests[1]["messages"]
-            tool_messages = [m for m in second if m["role"] == "tool"]
-            assert len(tool_messages) == 1
-            assert "161" in tool_messages[0]["content"]
+            carried = [m for m in second if "Result from" in (m.get("content") or "")]
+            assert len(carried) == 1
+            assert "161" in carried[0]["content"]
+
+    def test_tool_result_survives_the_chat_template(self, cfg: Config) -> None:
+        """The result must reach the *rendered prompt*, not just the message list.
+
+        This is the check that was missing, and its absence is why the tools
+        looked like they worked. ``chatml-function-calling`` renders system,
+        user and assistant turns and silently drops ``role="tool"``, so a result
+        could sit in ``llm.requests[1]["messages"]`` and still never reach the
+        model. The model then answered from its prior: "what time is it" came
+        back 14:15 when the tool had said 11:25, and the current date came back
+        2023-04-15 when the tool had said 2026-09-27.
+        """
+        script = [[("get_datetime", {"timezone": "local"})], "It is 11:25."]
+        for agent, llama, _ in make_agent(cfg, script):
+            reply = agent.answer("what time is it right now?")
+            messages = llama.requests[1]["messages"]
+            prompt = render_chatml_function_calling(messages)
+
+            # Compare against what the tool really returned, not a guess, since
+            # this exercises the live get_datetime.
+            returned = reply.tool_calls[0].result["time"]
+            assert returned in prompt, "tool result never reached the rendered prompt"
+            # Nothing may be sent in a role the template cannot render.
+            assert all(m["role"] in {"system", "user", "assistant"} for m in messages)
 
 
 class TestLoopGuards:
@@ -315,6 +365,66 @@ class TestLoopGuards:
             reply = agent.answer("what is 7 times 23?")
             assert tool_names(reply) == ["calculate"]  # not two
             assert reply.text
+
+    def test_a_tool_is_not_called_twice_in_one_turn(self, cfg: Config) -> None:
+        """One call per tool per turn, however the arguments differ.
+
+        Once the model can see results, it started re-reading them: "what is 7
+        times 23?" calculated 161, then calculated 1127 by feeding 161 back in
+        as a factor, then asked for the weather twice, and answered with the
+        right number followed by an unrelated forecast. The identical-call guard
+        misses it because every call's arguments differ.
+        """
+        script = [
+            [("calculate", {"expression": "7 * 23"})],
+            [("calculate", {"expression": "7 * 161"})],
+            "161.",
+        ]
+        for agent, _, _ in make_agent(cfg, script):
+            reply = agent.answer("what is 7 times 23?")
+            assert tool_names(reply) == ["calculate"], "calculate ran twice in one turn"
+            assert reply.text
+
+    def test_a_repeat_call_does_not_silence_the_other_tools_in_the_round(
+        self, cfg: Config
+    ) -> None:
+        """Blocking a repeat must not discard a genuinely new call alongside it."""
+        script = [
+            [("calculate", {"expression": "7 * 23"})],
+            [("calculate", {"expression": "7 * 161"}), ("get_datetime", {})],
+            "161.",
+        ]
+        for agent, _, _ in make_agent(cfg, script):
+            reply = agent.answer("what is 7 times 23?")
+            assert tool_names(reply) == ["calculate", "get_datetime"]
+
+    def test_two_different_tools_still_chain(self, cfg: Config) -> None:
+        """The guard is per tool, not a blanket one-call-per-turn rule."""
+        script = [
+            [("get_datetime", {})],
+            [("calculate", {"expression": "1 + 1"})],
+            "It is noon and two.",
+        ]
+        for agent, _, _ in make_agent(cfg, script):
+            reply = agent.answer("what time is it and what is 1 plus 1?")
+            assert tool_names(reply) == ["get_datetime", "calculate"]
+
+    def test_a_failed_tool_may_be_retried(self, cfg: Config) -> None:
+        """A tool that errored has not answered, so asking again is legitimate.
+
+        The arguments differ on purpose, otherwise the identical-call guard
+        fires first and this would not exercise the error path at all.
+        """
+        script = [
+            [("get_weather", {"city": "Pune"})],
+            [("get_weather", {"city": "Pune, India"})],
+            "The weather service is unreachable.",
+        ]
+        for agent, _, _ in make_agent(cfg, script, weather=FakeWeather(fail=True)):
+            reply = agent.answer("what is the weather in Pune?")
+            # Both attempts are allowed through: an error is not an answer, so
+            # marking the tool as "answered" would make a retry look like a loop.
+            assert tool_names(reply) == ["get_weather", "get_weather"]
 
     def test_a_leaked_call_stub_forces_a_spoken_answer(self, cfg: Config) -> None:
         script = ["functions.get_weather:", "It is 28 degrees in Pune."]
@@ -511,3 +621,86 @@ class TestRealModel:
         reply = agent.answer("what is 12 divided by 4?")
         assert reply.elapsed_ms > 0
         assert all(c.to_dict()["name"] for c in reply.tool_calls)
+
+
+class TestRenderResult:
+    """The tool result is flattened before the model sees it.
+
+    Handing the model ``json.dumps`` of a nested result was the cause of a
+    real, demo-visible failure: ``get_datetime`` returned ``time: 11:25:01``
+    and the model answered "14:15", and returned ``date: 2026-09-27`` and the
+    model answered "2023-04-15". A 3B model cannot reliably pick one value out
+    of a nested blob, so the structure is removed.
+    """
+
+    def test_lifts_a_nested_scalar_to_a_labelled_line(self):
+        out = _render_result({"forecast": {"tomorrow": {"high": 31}, "today": {"high": 29}}})
+        assert "today.high: 29" in out
+        assert "tomorrow.high: 31" in out
+
+    def test_keeps_both_branches_distinguishable(self):
+        """Collapsing must not merge two branches that share a leaf name."""
+        out = _render_result({"host": {"memory": 32}, "device": {"memory": 120}})
+        assert "host.memory: 32" in out
+        assert "device.memory: 120" in out
+
+    def test_collapses_a_single_wrapper_it_would_otherwise_hide_behind(self):
+        """A one-key chain is noise in front of the value that matters.
+
+        The model answered a memory question with the CPU count partly because
+        the real field read ``host.memory_total_gb`` rather than
+        ``memory_total_gb``. A lone wrapper is dropped so the field name stands
+        on its own.
+        """
+        assert _render_result({"current": {"time": "11:25:01"}}) == "time: 11:25:01"
+        assert _render_result({"host": {"memory_total_gb": 32.9}}) == "memory_total_gb: 32.9"
+
+    def test_keeps_the_real_date_and_time_readable(self):
+        out = _render_result(
+            {
+                "timezone": "IST",
+                "date": "2026-09-27",
+                "time": "11:25:01",
+                "weekday": "Sunday",
+            }
+        )
+        assert "date: 2026-09-27" in out
+        assert "time: 11:25:01" in out
+
+    def test_emits_no_json_punctuation_to_echo_back(self):
+        out = _render_result({"host": {"memory_total_gb": 32.9}, "device": {"connected": False}})
+        for junk in ("{", "}", '"'):
+            assert junk not in out
+
+    def test_renders_booleans_as_words_not_python_caps(self):
+        assert "connected: no" in _render_result({"connected": False})
+        assert "connected: yes" in _render_result({"connected": True})
+
+    def test_labels_a_bare_scalar_instead_of_an_empty_key(self):
+        assert _render_result("plain string") == "result: plain string"
+        assert not _render_result(42).startswith(":")
+
+    def test_joins_a_scalar_list_and_summarises_a_nested_one(self):
+        out = _render_result({"tags": ["a", "b"], "rows": [{"x": 1}, {"x": 2}]})
+        assert "tags: a, b" in out
+        assert "rows: 2 entries" in out
+
+    def test_drops_keys_no_spoken_answer_needs(self):
+        assert "alternatives" not in _render_result({"alternatives": ["x"], "name": "Pune"})
+
+    def test_drops_nulls(self):
+        assert "admin" not in _render_result({"name": "Pune", "admin": None})
+
+    def test_reports_an_empty_result_rather_than_saying_nothing(self):
+        assert _render_result({}) == "no result"
+        assert _render_result([]) == "no result"
+
+    def test_bounds_a_huge_result(self):
+        big = {f"k{i}": "x" * 200 for i in range(200)}
+        out = _render_result(big)
+        assert len(out) < 2000
+
+    def test_preserves_a_calculate_result_intact(self):
+        # The one case that already worked; flattening must not regress it.
+        out = _render_result({"expression": "7*23", "result": "161"})
+        assert "result: 161" in out

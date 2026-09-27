@@ -138,8 +138,11 @@ def build_registry(cfg: Config, weather: WeatherClient | None = None) -> ToolReg
         Tool(
             name="system_status",
             description=(
-                "Report the health of this machine and the connected FRIDAY device: "
-                "CPU load, memory, disk and the device's free heap / Wi-Fi signal."
+                "Report this machine's health: total memory in GB, memory in use, "
+                "CPU count and load, and free disk space. Also reports the "
+                "connected FRIDAY device's free heap and Wi-Fi signal. Use this "
+                "for any question about how much memory or RAM the machine has, "
+                "how busy the CPU is, or how much disk space is left."
             ),
             parameters={"type": "object", "properties": {}},
             handler=system_status,
