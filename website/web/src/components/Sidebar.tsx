@@ -98,7 +98,7 @@ export function Sidebar({
         </Section>
       ) : system?.device_note ? (
         <Section title="device">
-          <p className="text-[11px] leading-relaxed text-ink-600">{system.device_note}</p>
+          <p className="text-sm leading-relaxed text-ink-600">{system.device_note}</p>
         </Section>
       ) : null}
     </aside>
@@ -108,7 +108,7 @@ export function Sidebar({
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="rounded-xl border border-ink-800 bg-ink-900/40 p-3.5">
-      <h2 className="mb-2.5 font-mono text-[10px] uppercase tracking-[0.18em] text-ink-600">
+      <h2 className="mb-2.5 font-mono text-xs uppercase tracking-[0.18em] text-ink-600">
         {title}
       </h2>
       <dl className="space-y-1.5">{children}</dl>
@@ -126,7 +126,7 @@ function Row({
   tone?: 'good' | 'bad'
 }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 text-[11px]">
+    <div className="flex items-baseline justify-between gap-3 text-sm">
       <dt className="text-ink-500">{label}</dt>
       <dd
         className={`truncate font-mono tabular-nums ${
@@ -152,7 +152,7 @@ function Meter({
 }) {
   const clamped = pct === null ? 0 : Math.max(0, Math.min(100, pct))
   return (
-    <div className="text-[11px]">
+    <div className="text-sm">
       <div className="flex items-baseline justify-between gap-3">
         <dt className="text-ink-500">{label}</dt>
         <dd className="font-mono text-ink-300 tabular-nums">

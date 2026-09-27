@@ -249,3 +249,53 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'retry' })).toBeInTheDocument()
   })
 })
+
+describe('App: highlighting the newest turn', () => {
+  it('highlights only the most recent turn in a list of several', async () => {
+    const { FakeSocket } = stub({
+      turns: [
+        makeTurn({ id: 'newest', seq: 9, transcript: 'the newest instruction' }),
+        makeTurn({ id: 'middle', seq: 8, transcript: 'an older instruction' }),
+        makeTurn({ id: 'oldest', seq: 7, transcript: 'the oldest instruction' }),
+      ],
+    })
+
+    render(<App />)
+    await screen.findByText('the newest instruction')
+
+    const cards = screen.getAllByTestId('turn-card')
+    expect(cards).toHaveLength(3)
+
+    // `turns` is newest-first, so the first card is the one to emphasise.
+    expect(cards[0]).toHaveAttribute('data-latest', 'true')
+    expect(cards[1]).toHaveAttribute('data-latest', 'false')
+    expect(cards[2]).toHaveAttribute('data-latest', 'false')
+    expect(FakeSocket).toBeDefined()
+  })
+
+  it('moves the highlight when a newer turn arrives over the socket', async () => {
+    const { FakeSocket } = stub({ turns: [makeTurn({ id: 'first', seq: 1 })] })
+
+    render(<App />)
+    await screen.findByText(/weather in Pune/)
+    expect(screen.getAllByTestId('turn-card')[0]).toHaveAttribute('data-latest', 'true')
+
+    const socket = await waitFor(() => {
+      const found = FakeSocket.instances[0]
+      if (!found) throw new Error('no socket yet')
+      return found
+    })
+    act(() => {
+      socket.emit({
+        event: 'turn.created',
+        turn: makeTurn({ id: 'second', seq: 2, transcript: 'a brand new question' }),
+      })
+    })
+
+    await screen.findByText('a brand new question')
+    const cards = screen.getAllByTestId('turn-card')
+    expect(cards[0]).toHaveAttribute('data-latest', 'true')
+    expect(cards[0]).toHaveTextContent('a brand new question')
+    expect(cards[1]).toHaveAttribute('data-latest', 'false')
+  })
+})

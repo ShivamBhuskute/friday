@@ -31,7 +31,7 @@ export function Composer({ onAsk, disabled }: { onAsk: (text: string) => void; d
   return (
     <form onSubmit={submit} className="flex flex-col gap-1.5">
       <div className="flex items-center gap-2 rounded-xl border border-ink-800 bg-ink-900/80 px-3 py-2 transition-colors focus-within:border-accent-500/40">
-        <span aria-hidden="true" className="font-mono text-sm text-ink-600">
+        <span aria-hidden="true" className="font-mono text-base text-ink-600">
           &rsaquo;
         </span>
         <input
@@ -41,18 +41,18 @@ export function Composer({ onAsk, disabled }: { onAsk: (text: string) => void; d
           aria-label="Ask FRIDAY a question"
           disabled={disabled}
           maxLength={2000}
-          className="min-w-0 flex-1 bg-transparent text-sm text-ink-100 placeholder:text-ink-600 focus:outline-none disabled:opacity-50"
+          className="min-w-0 flex-1 bg-transparent text-base text-ink-100 placeholder:text-ink-600 focus:outline-none disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={disabled || busy || text.trim().length === 0}
-          className="shrink-0 rounded-lg border border-accent-500/30 bg-accent-500/10 px-3 py-1 text-[11px] font-medium text-accent-400 transition hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-40"
+          className="shrink-0 rounded-lg border border-accent-500/30 bg-accent-500/10 px-3 py-1 text-sm font-medium text-accent-400 transition hover:bg-accent-500/20 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {busy ? 'sending' : 'send'}
         </button>
       </div>
       {error ? (
-        <p role="alert" className="pl-1 text-[11px] text-rose-300">
+        <p role="alert" className="pl-1 text-sm text-rose-300">
           {error}
         </p>
       ) : null}

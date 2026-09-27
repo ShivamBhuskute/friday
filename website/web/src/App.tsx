@@ -19,7 +19,7 @@ export default function App() {
           {serverError ? (
             <div
               role="alert"
-              className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[13px] text-rose-200"
+              className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-base text-rose-200"
             >
               <span>
                 <span className="font-medium">offline.</span> {serverError}
@@ -27,7 +27,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={() => void resync()}
-                className="shrink-0 rounded-lg border border-rose-400/40 px-2.5 py-1 text-[11px] transition hover:bg-rose-400/10"
+                className="shrink-0 rounded-lg border border-rose-400/40 px-2.5 py-1 text-sm transition hover:bg-rose-400/10"
               >
                 retry
               </button>
@@ -41,10 +41,17 @@ export default function App() {
           {turns.length === 0 ? (
             <EmptyState socket={socket} />
           ) : (
-            <ol className="space-y-2.5" data-testid="turn-list">
-              {turns.map((turn) => (
+            <ol className="space-y-3" data-testid="turn-list">
+              {turns.map((turn, index) => (
                 <li key={turn.id}>
-                  <TurnCard turn={turn} onDelete={(id) => void remove(id)} />
+                  <TurnCard
+                    turn={turn}
+                    // `turns` is newest-first, so the head of the list is the
+                    // exchange that just happened and the one the room is
+                    // waiting on.
+                    latest={index === 0}
+                    onDelete={(id) => void remove(id)}
+                  />
                 </li>
               ))}
             </ol>
@@ -60,14 +67,14 @@ export default function App() {
 function EmptyState({ socket }: { socket: 'connecting' | 'open' | 'closed' }) {
   return (
     <div className="rounded-xl border border-dashed border-ink-800 px-6 py-14 text-center">
-      <p className="text-[13px] text-ink-400">
+      <p className="text-base text-ink-400">
         {socket === 'open'
           ? 'No turns yet.'
           : socket === 'connecting'
             ? 'Connecting to the FRIDAY server…'
             : 'Disconnected from the FRIDAY server.'}
       </p>
-      <p className="mx-auto mt-3 max-w-md text-[12px] leading-relaxed text-ink-600">
+      <p className="mx-auto mt-3 max-w-md text-sm leading-relaxed text-ink-600">
         Say something after the wake word, or type a question above. To replay a recorded
         question without hardware:{' '}
         <code className="font-mono text-ink-500">python tools/replay_device.py</code>

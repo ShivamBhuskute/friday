@@ -22,7 +22,7 @@ export function ToolTrace({ calls }: { calls: ToolCall[] }) {
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        className="flex items-center gap-2 text-left text-[11px] text-ink-400 transition hover:text-ink-200"
+        className="flex items-center gap-2 text-left text-sm text-ink-400 transition hover:text-ink-200"
       >
         <svg
           viewBox="0 0 8 8"
@@ -50,7 +50,7 @@ export function ToolTrace({ calls }: { calls: ToolCall[] }) {
       {open ? (
         <ol className="mt-2 space-y-1.5 border-l border-ink-700 pl-3">
           {calls.map((call, index) => (
-            <li key={`${call.name}-${index}`} className="font-mono text-[11px]">
+            <li key={`${call.name}-${index}`} className="font-mono text-sm">
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-glow-400">{call.name}</span>
                 <span className="text-ink-500">({compactArgs(call.arguments)})</span>
@@ -90,7 +90,7 @@ function compactArgs(args: Record<string, unknown>): string {
 /** Exported for the expanded view in the detail pane. */
 export function ToolCallDetail({ call }: { call: ToolCall }) {
   return (
-    <pre className="overflow-x-auto rounded-lg bg-ink-900 p-3 font-mono text-[11px] leading-relaxed text-ink-200">
+    <pre className="overflow-x-auto rounded-lg bg-ink-900 p-3 font-mono text-sm leading-relaxed text-ink-200">
       {formatJson({
         tool: call.name,
         arguments: call.arguments,

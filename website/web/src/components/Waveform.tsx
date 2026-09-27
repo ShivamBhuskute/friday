@@ -158,12 +158,12 @@ export function Waveform({ url, durationS, disabled = false }: WaveformProps) {
         <canvas ref={canvasRef} className="block h-14 w-full" />
       </div>
 
-      <span className="w-14 shrink-0 text-right font-mono text-[11px] text-ink-400 tabular-nums">
+      <span className="w-14 shrink-0 text-right font-mono text-sm text-ink-400 tabular-nums">
         {formatDuration(playback.position || seconds)}
       </span>
 
       {playback.error ? (
-        <span className="text-[11px] text-rose-300" role="alert">
+        <span className="text-sm text-rose-300" role="alert">
           {playback.error}
         </span>
       ) : null}

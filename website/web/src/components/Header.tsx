@@ -23,11 +23,11 @@ export function Header({
     <header className="sticky top-0 z-20 border-b border-ink-800/80 bg-ink-950/80 backdrop-blur-xl">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 sm:px-6">
         <div className="flex items-baseline gap-2">
-          <h1 className="text-[15px] font-semibold tracking-[0.2em] text-ink-100">FRIDAY</h1>
-          <span className="font-mono text-[10px] uppercase tracking-wider text-ink-600">console</span>
+          <h1 className="text-xl font-semibold tracking-[0.2em] text-ink-100">FRIDAY</h1>
+          <span className="font-mono text-xs uppercase tracking-wider text-ink-600">console</span>
         </div>
 
-        <div className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
+        <div className="flex flex-1 flex-wrap items-center gap-x-4 gap-y-1.5 text-sm">
           <Indicator
             label={live ? 'feed live' : socket === 'connecting' ? 'connecting' : 'feed offline'}
             tone={live ? 'ok' : 'warn'}
@@ -68,7 +68,7 @@ export function Header({
         </div>
 
         {ingest?.last_audio_at ? (
-          <span className="font-mono text-[10px] text-ink-600 tabular-nums">
+          <span className="font-mono text-xs text-ink-600 tabular-nums">
             last audio{' '}
             {new Date(ingest.last_audio_at * 1000).toLocaleTimeString([], {
               hour: '2-digit',

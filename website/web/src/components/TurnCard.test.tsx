@@ -134,3 +134,50 @@ describe('TurnCard', () => {
     expect(onDelete).toHaveBeenCalledWith('turn-0001')
   })
 })
+
+describe('TurnCard: the newest turn is the highlight', () => {
+  it('marks itself as latest when told to', () => {
+    render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} latest />)
+    expect(screen.getByTestId('turn-card')).toHaveAttribute('data-latest', 'true')
+  })
+
+  it('does not claim to be latest by default', () => {
+    render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} />)
+    expect(screen.getByTestId('turn-card')).toHaveAttribute('data-latest', 'false')
+  })
+
+  it('sets the instruction larger on the latest card than on an older one', () => {
+    // The whole point of the prop: at a glance the room can tell which
+    // exchange just happened, in a column of history.
+    const { unmount } = render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} latest />)
+    const big = screen.getByTestId('turn-instruction').className
+    unmount()
+
+    render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} />)
+    const small = screen.getByTestId('turn-instruction').className
+
+    expect(big).toContain('text-2xl')
+    expect(small).toContain('text-base')
+    expect(small).not.toContain('text-2xl')
+  })
+
+  it('enlarges the answer too, so the reply is readable from the back of a room', () => {
+    const { unmount } = render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} latest />)
+    const big = screen.getByTestId('turn-answer').className
+    unmount()
+
+    render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} />)
+    expect(big).toContain('text-xl')
+    expect(screen.getByTestId('turn-answer').className).toContain('text-base')
+  })
+
+  it('says "latest" so the highlight is not only visual', () => {
+    render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} latest />)
+    expect(screen.getByText(/latest/i)).toBeInTheDocument()
+  })
+
+  it('does not shout "latest" on an older card', () => {
+    render(<TurnCard turn={makeTurn()} onDelete={vi.fn()} />)
+    expect(screen.queryByText(/latest/i)).not.toBeInTheDocument()
+  })
+})

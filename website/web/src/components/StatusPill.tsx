@@ -50,7 +50,7 @@ export function StatusPill({ state }: { state: TurnState }) {
     <span
       data-testid="status-pill"
       data-state={state}
-      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium tracking-wide ${style.className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium tracking-wide ${style.className}`}
     >
       {busy ? <span className="pulse-dot size-1.5 rounded-full bg-current" /> : null}
       {style.label}
